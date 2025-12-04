@@ -657,6 +657,16 @@ option[selected] {
     word-break: break-word;
 }
 
+.comment-collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+}
+
 .op_indicator {
     color: #0066CC;
 }

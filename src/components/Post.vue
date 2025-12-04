@@ -15,8 +15,8 @@
             <span class="title-small text-4">Comments</span>
         </div>
         <div class="list-container dpy-16">
-            <div v-for="comment in comments">
-                <div v-show="comment.kind == 't1'" class="list-item-full list-item-divider dpx-16">
+            <div v-for="(comment, index) in comments" :key="index">
+                <div v-show="comment.kind == 't1' && !comment.hidden" class="list-item-full list-item-divider dpx-16" @click="toggleComment(index)">
                     <div v-show="comment.depth" class="comment-depth-container">
                         <div class="comment-depth" v-for="_ in comment.depth">
                             <div class="comment-depth-line"></div>
@@ -31,8 +31,9 @@
                             <span class="label-small text-10" @click.passive="open_user(comment.author)">{{
                                 comment.author }}</span>
                             <span v-if="comment.author == post.data.author" class="label-small op_indicator fw-bold dps-4">(OP)</span>
+                            <span v-if="comment.collapsed" class="material-icons text-10 dps-4" style="font-size: 16px;">expand_more</span>
                         </div>
-                        <span class="body-medium" v-html="markdown(comment.body)"></span>
+                        <span class="body-medium" :class="{ 'comment-collapsed': comment.collapsed }" v-html="markdown(comment.body)"></span>
                     </div>
                 </div>
             </div>
@@ -130,6 +131,7 @@ async function get_all_replies(comment, depth = 0) {
         author: comment.data.author,
         body: comment.data.body_html,
         depth: depth,
+        collapsed: false,
     })
 
     if (!comment.data.replies) return replies;
@@ -137,6 +139,38 @@ async function get_all_replies(comment, depth = 0) {
         replies.push(...await get_all_replies(reply, depth + 1));
     })
     return replies;
+}
+
+function toggleComment(index) {
+	const comment = comments.value[index];
+	comment.collapsed = !comment.collapsed;
+
+	if (comment.collapsed) {
+		const commentDepth = comment.depth;
+		for (let i = index + 1; i < comments.value.length; i++)
+		{
+			if (comments.value[i].depth <= commentDepth)
+			{
+				break;
+			}
+			comments.value[i].hidden = true;
+		}
+	}
+	else
+	{
+		const commentDepth = comment.depth;
+		for (let i = index + 1; i < comments.value.length; i++)
+		{
+			if (comments.value[i].depth <= commentDepth)
+			{
+				break;
+			}
+			if (comments.value[i].depth === commentDepth + 1)
+			{
+				comments.value[i].hidden = false;
+			}
+		}
+	}
 }
 
 onBeforeMount(() => {
