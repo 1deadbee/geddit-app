@@ -3,6 +3,11 @@
         <div class="full-card-content">
             <component :is="types[type]" :data="post.data" />
         </div>
+        <div v-if="post.data.selftext_html && type !== 'FullText'" class="text-wrap text-break w-100">
+            <div class="position-relative">
+                <div class="text-4 text-post position-relative video-post-selftext" v-html="decodeHtml(post.data.selftext_html)" />
+            </div>
+        </div>
         <div class="full-card-details">
             <div class="d-flex flex-wrap align-items-center text-4">
                 <span class="label-medium text-11" @click.passive="open_subreddit">r/{{ post.data.subreddit

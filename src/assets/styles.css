@@ -560,9 +560,22 @@ option[selected] {
 }
 
 .full-text-post {
-    padding-left: 16px;
-    padding-right: 16px;
-    padding-top: 16px;
+	padding-left: 16px;
+	padding-right: 16px;
+	padding-top: 16px;
+}
+
+.video-post-selftext {
+	width: 100%;
+	border-radius: 12px;
+	background-color: var(--md-foreground);
+	padding: 16px;
+}
+
+.video-post-selftext>.md {
+    width: 100%;
+    border-radius: 0;
+    background-color: transparent;
 }
 
 /* Markdown Table */
