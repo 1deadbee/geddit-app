@@ -1,10 +1,15 @@
 <template>
-    <div v-if="!data" class="d-flex justify-content-center align-items-center cover-all position-absolute">
+    <div v-if="loading && !data" class="d-flex justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
         <div class="d-flex circle md-background p-2">
             <div class="spinner-border text-4" role="status"></div>
         </div>
     </div>
-    <div v-else class="d-flex flex-column p-3">
+    <div v-if="error && !data" class="d-flex flex-column justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
+        <span class="material-icons-outlined" style="font-size: 48px; color: var(--md-sys-color-error);">error_outline</span>
+        <p class="mt-3 text-center px-4">Failed to load user profile. Please check your internet connection.</p>
+        <button class="btn btn-primary mt-2" @click="retry">Retry</button>
+    </div>
+    <div v-if="data" class="d-flex flex-column p-3">
         <div class="banner d-flex justify-content-center align-items-center position-relative mb-3">
             <img :src="banner_img" class="cover md-rounded-12">
             <img :src="icon_img" class="snoovatar position-absolute">
@@ -70,6 +75,9 @@ const data = ref(null);
 const icon_img = ref(null);
 const banner_img = ref(null);
 
+const loading = ref(false);
+const error = ref(false);
+
 async function switch_to_overview() {
     type.value = 'UserOverview';
 }
@@ -83,12 +91,42 @@ async function switch_to_comments() {
 }
 
 async function setup() {
-    let response = await geddit.getUser(router.currentRoute.value.params.id);
-    if (!response) return;
+	loading.value = true;
+	error.value = false;
 
-    banner_img.value = response.subreddit.banner_img ? response.subreddit.banner_img.split("?")[0] : "/images/logo_background.jpg"
-    icon_img.value = response.icon_img.split("?")[0];
-    data.value = response;
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
+
+		const fetchPromise = geddit.getUser(router.currentRoute.value.params.id);
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response)
+		{
+			error.value = true;
+			return;
+		}
+
+		banner_img.value = response.subreddit.banner_img ? response.subreddit.banner_img.split("?")[0] : "/images/logo_background.jpg"
+		icon_img.value = response.icon_img.split("?")[0];
+		data.value = response;
+	}
+	catch (err)
+	{
+		console.error('Failed to load user:', err);
+		error.value = true;
+	}
+	finally
+	{
+		loading.value = false;
+	}
+}
+
+function retry() {
+	setup();
 }
 
 function format_karma() {

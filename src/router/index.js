@@ -94,15 +94,18 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    let pages = JSON.parse(localStorage.getItem("pages"));
-    pages = pages.slice(-1);
+	let pages = JSON.parse(localStorage.getItem("pages"));
+	pages = pages.slice(-1);
 
-    pages.push({
-        path: from.path,
-        scroll: document.querySelector('.content-view').scrollTop
-    })
-    localStorage.setItem("pages", JSON.stringify(pages));
-    next();
+	pages.push({
+		path: from.path,
+		scroll: document.querySelector('.content-view').scrollTop
+	})
+	localStorage.setItem("pages", JSON.stringify(pages));
+
+	document.querySelector('.content-view').scrollTop = 0;
+
+	next();
 });
 
 export default router

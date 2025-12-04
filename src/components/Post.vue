@@ -1,10 +1,15 @@
 <template>
-    <div v-if="!post" class="d-flex justify-content-center align-items-center cover-all position-absolute">
+    <div v-if="loading && !post" class="d-flex justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
         <div class="d-flex circle md-background p-2">
             <div class="spinner-border text-4" role="status"></div>
         </div>
     </div>
-    <div v-else>
+    <div v-if="error && !post" class="d-flex flex-column justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
+        <span class="material-icons-outlined" style="font-size: 48px; color: var(--md-sys-color-error);">error_outline</span>
+        <p class="mt-3 text-center px-4">Failed to load post. Please check your internet connection.</p>
+        <button class="btn btn-primary mt-2" @click="retry">Retry</button>
+    </div>
+    <div v-if="post">
         <FullPost :post="post" />
         <div class="d-flex dpx-16">
             <span class="title-small text-4">Comments</span>
@@ -47,20 +52,52 @@ const post = ref(null);
 const comments = ref([]);
 const view = ref(document.querySelector('.content-view'));
 
+const loading = ref(false);
+const error = ref(false);
+
 async function setup() {
-    let response = await geddit.getSubmissionComments(router.currentRoute.value.params.id);
-    if (!response) return;
+	loading.value = true;
+	error.value = false;
 
-    // Get all replies for all comments in the post with Promise all as a single array
-    Promise.all(response.comments.map(async (comment) => {
-        return await get_all_replies(comment);
-    }))
-        .then(replies => {
-            comments.value = replies.flat();
-        })
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
 
-    post.value = response.submission;
-    await nextTick();
+		const fetchPromise = geddit.getSubmissionComments(router.currentRoute.value.params.id);
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response)
+		{
+			error.value = true;
+			return;
+		}
+
+		Promise.all(response.comments.map(async (comment) => {
+			return await get_all_replies(comment);
+		}))
+			.then(replies => {
+				comments.value = replies.flat();
+			})
+
+		post.value = response.submission;
+		await nextTick();
+	}
+	catch (err)
+	{
+		console.error('Failed to load post:', err);
+		error.value = true;
+	}
+	finally
+	{
+		loading.value = false;
+	}
+}
+
+function retry() {
+	setup();
 }
 
 function decodeHtml(html) {

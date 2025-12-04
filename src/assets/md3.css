@@ -282,6 +282,8 @@
     padding-bottom: 8px;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    touch-action: pan-y;
 }
 
 .list-item {
@@ -300,6 +302,8 @@
     padding-bottom: 8px;
     display: flex;
     color: var(--nord4);
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .list-item-leading-icon {

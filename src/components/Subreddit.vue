@@ -1,10 +1,15 @@
 <template>
-    <div v-if="!data" class="d-flex justify-content-center align-items-center cover-all position-absolute">
+    <div v-if="loading && !data" class="d-flex justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
         <div class="d-flex circle md-background p-2">
             <div class="spinner-border text-4" role="status"></div>
         </div>
     </div>
-    <div v-else>
+    <div v-if="error && !data" class="d-flex flex-column justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
+        <span class="material-icons-outlined" style="font-size: 48px; color: var(--md-sys-color-error);">error_outline</span>
+        <p class="mt-3 text-center px-4">Failed to load subreddit. Please check your internet connection.</p>
+        <button class="btn btn-primary mt-2" @click="retry">Retry</button>
+    </div>
+    <div v-if="data">
         <TopAppBarSubreddit ref="topbar" :subreddit="data.display_name_prefixed" @params_changed="params_changed" />
         <div class="d-flex flex-column p-3 pt-0">
             <div class="banner d-flex justify-content-center align-items-center position-relative mb-2">
@@ -69,6 +74,41 @@ const icon = ref(null);
 const followed = ref(false);
 
 const scroll_loaded = ref(true);
+const loading = ref(false);
+const error = ref(false);
+
+function get_subreddit_key() {
+	const id = router.currentRoute.value.params.id;
+	if (!id) return 'unknown';
+	return id.toLowerCase();
+}
+
+function get_subreddit_sort_preferences() {
+	try
+	{
+		const prefs = JSON.parse(localStorage.getItem('sort_preferences'));
+		if (prefs)
+		{
+			const key = get_subreddit_key();
+			if (prefs[key])
+			{
+				return {
+					sort: prefs[key].sort || "hot",
+					time: prefs[key].time || "day"
+				};
+			}
+		}
+	}
+	catch (err)
+	{
+		console.error('Failed to parse sort preferences:', err);
+	}
+
+	return {
+		sort: "hot",
+		time: "day"
+	};
+}
 
 async function params_changed() {
     posts.value = [];
@@ -105,12 +145,38 @@ async function unfollow() {
 }
 
 async function get_subreddit() {
-    let response = await geddit.getSubreddit(router.currentRoute.value.params.id);
-    if (!response) return;
+	loading.value = true;
+	error.value = false;
 
-    data.value = response;
-    check_followed();
-    get_sub_icon();
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
+
+		const fetchPromise = geddit.getSubreddit(router.currentRoute.value.params.id);
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response)
+		{
+			error.value = true;
+			return;
+		}
+
+		data.value = response;
+		check_followed();
+		get_sub_icon();
+	}
+	catch (err)
+	{
+		console.error('Failed to load subreddit:', err);
+		error.value = true;
+	}
+	finally
+	{
+		loading.value = false;
+	}
 }
 
 async function get_sub_icon() {
@@ -149,23 +215,58 @@ function get_description() {
 }
 
 async function setup() {
-    let response = await geddit.getSubmissions("hot", router.currentRoute.value.params.id, {
-        t: "day"
-    });
-    if (!response) return;
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
 
-    posts.value = response.posts;
-    after.value = response.after;
+		const { sort: savedSort, time: savedTime } = get_subreddit_sort_preferences();
+
+		const fetchPromise = geddit.getSubmissions(savedSort, router.currentRoute.value.params.id, {
+			t: savedTime
+		});
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response) return;
+
+		posts.value = response.posts;
+		after.value = response.after;
+	}
+	catch (err)
+	{
+		console.error('Failed to load posts:', err);
+	}
 }
 
 async function get_posts() {
-    let response = await geddit.getSubmissions(topbar.value.sort, router.currentRoute.value.params.id, {
-        t: topbar.value.time
-    });
-    if (!response) return;
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
 
-    posts.value = response.posts;
-    after.value = response.after;
+		const fetchPromise = geddit.getSubmissions(topbar.value.sort, router.currentRoute.value.params.id, {
+			t: topbar.value.time
+		});
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response) return;
+
+		posts.value = response.posts;
+		after.value = response.after;
+	}
+	catch (err)
+	{
+		console.error('Failed to load posts:', err);
+	}
+}
+
+function retry() {
+	get_subreddit();
+	setup();
 }
 
 async function scroll() {

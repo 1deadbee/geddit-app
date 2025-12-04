@@ -1,10 +1,15 @@
 <template>
-    <div v-if="!posts.length" class="d-flex justify-content-center align-items-center cover-all position-absolute">
+    <TopAppBar ref="topbar" subreddit="Popular" @params_changed="params_changed" />
+    <div v-if="loading && !posts.length" class="d-flex justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
         <div class="d-flex circle md-background p-2">
             <div class="spinner-border text-4" role="status"></div>
         </div>
     </div>
-    <TopAppBar ref="topbar" subreddit="Popular" @params_changed="params_changed" />
+    <div v-if="error && !posts.length" class="d-flex flex-column justify-content-center align-items-center" style="min-height: 200px; margin-top: 60px;">
+        <span class="material-icons-outlined" style="font-size: 48px; color: var(--md-sys-color-error);">error_outline</span>
+        <p class="mt-3 text-center px-4">Failed to load posts. Please check your internet connection.</p>
+        <button class="btn btn-primary mt-2" @click="retry">Retry</button>
+    </div>
     <div class="cards dpb-16">
         <Post v-for="post in posts" :post="post.data" />
     </div>
@@ -28,25 +33,108 @@ const posts = ref([]);
 const after = ref(null);
 
 const scroll_loaded = ref(true);
+const loading = ref(false);
+const error = ref(false);
+
+function get_home_sort_preferences() {
+	try
+	{
+		const prefs = JSON.parse(localStorage.getItem('sort_preferences'));
+		if (prefs && prefs.home)
+		{
+			return {
+				sort: prefs.home.sort || "hot",
+				time: prefs.home.time || "day"
+			};
+		}
+	}
+	catch (err)
+	{
+		console.error('Failed to parse sort preferences:', err);
+	}
+
+	return {
+		sort: "hot",
+		time: "day"
+	};
+}
 
 async function setup() {
-    let response = await geddit.getSubmissions("hot", "popular", {
-        t: "day"
-    });
-    if (!response) return;
+	loading.value = true;
+	error.value = false;
 
-    posts.value = response.posts;
-    after.value = response.after;
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
+
+		const { sort: savedSort, time: savedTime } = get_home_sort_preferences();
+
+		const fetchPromise = geddit.getSubmissions(savedSort, "popular", {
+			t: savedTime
+		});
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response)
+		{
+			error.value = true;
+			return;
+		}
+
+		posts.value = response.posts;
+		after.value = response.after;
+	}
+	catch (err)
+	{
+		console.error('Failed to load posts:', err);
+		error.value = true;
+	}
+	finally
+	{
+		loading.value = false;
+	}
 }
 
 async function get_posts() {
-    let response = await geddit.getSubmissions(topbar.value.sort, "popular", {
-        t: topbar.value.time
-    });
-    if (!response) return;
+	loading.value = true;
+	error.value = false;
 
-    posts.value = response.posts;
-    after.value = response.after;
+	try
+	{
+		const timeoutPromise = new Promise((_, reject) =>
+			setTimeout(() => reject(new Error('Request timeout')), 15000)
+		);
+
+		const fetchPromise = geddit.getSubmissions(topbar.value.sort, "popular", {
+			t: topbar.value.time
+		});
+
+		let response = await Promise.race([fetchPromise, timeoutPromise]);
+
+		if (!response)
+		{
+			error.value = true;
+			return;
+		}
+
+		posts.value = response.posts;
+		after.value = response.after;
+	}
+	catch (err)
+	{
+		console.error('Failed to load posts:', err);
+		error.value = true;
+	}
+	finally
+	{
+		loading.value = false;
+	}
+}
+
+function retry() {
+	setup();
 }
 
 async function scroll() {

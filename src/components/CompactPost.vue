@@ -10,7 +10,7 @@
                 <span class="label-medium">{{ format_date() }}</span>
             </div>
             <span class="text-6 dpy-4" :class="store.title_size, { 'text-truncate': store.hidden.includes(post.id) }">{{
-                post.title }}</span>
+                decodeHtml(post.title) }}</span>
             <div class="d-flex align-items-center">
                 <span class="label-medium text-10 ct" @click.passive="open_user">u/{{ post.author }}</span>
             </div>
@@ -140,6 +140,12 @@ function format_num(points) {
     if (points > 1000000) return (points / 1000000).toFixed(1) + "M";
     if (points > 1000) return (points / 1000).toFixed(1) + "K";
     return points;
+}
+
+function decodeHtml(html) {
+	let txt = document.createElement("textarea");
+	txt.innerHTML = html;
+	return txt.value;
 }
 
 async function get_type() {

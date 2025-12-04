@@ -12,7 +12,7 @@
                 <span class="label-medium dmx-4">-</span>
                 <span class="label-medium">{{ format_date() }}</span>
             </div>
-            <span class="text-6 dpy-4" :class="store.title_size">{{ post.data.title }}</span>
+            <span class="text-6 dpy-4" :class="store.title_size">{{ decodeHtml(post.data.title) }}</span>
             <span class="label-medium text-10" @click.passive="open_user">u/{{ post.data.author }}</span>
             <div class="d-flex align-items-center dpt-16">
                 <div class="md-icon-container-with-label">
@@ -107,6 +107,12 @@ function format_num(points) {
     if (points > 1000000) return (points / 1000000).toFixed(1) + "M";
     if (points > 1000) return (points / 1000).toFixed(1) + "K";
     return points;
+}
+
+function decodeHtml(html) {
+	let txt = document.createElement("textarea");
+	txt.innerHTML = html;
+	return txt.value;
 }
 
 async function get_type() {
