@@ -30,6 +30,7 @@
                             </div>
                             <span class="label-small text-10" @click.passive="open_user(comment.author)">{{
                                 comment.author }}</span>
+                            <span v-if="comment.author == post.data.author" class="label-small op_indicator fw-bold dps-4">(OP)</span>
                         </div>
                         <span class="body-medium" v-html="markdown(comment.body)"></span>
                     </div>

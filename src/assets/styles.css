@@ -657,6 +657,10 @@ option[selected] {
     word-break: break-word;
 }
 
+.op_indicator {
+    color: #0066CC;
+}
+
 .preview-container {
     width: 100vw;
     height: 100vh;
