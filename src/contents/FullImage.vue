@@ -29,7 +29,7 @@ const start = ref({ x: 0, y: 0, distance: 0 });
 
 const image = ref(null);
 const image_options = ref({});
-const controls_visible = ref(true);
+const controls_visible = ref(false);
 
 const distance = (event) => {
     return Math.hypot(event.touches[0].clientX - event.touches[1].clientX, event.touches[0].clientY - event.touches[1].clientY);
