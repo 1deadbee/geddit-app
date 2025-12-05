@@ -6,6 +6,9 @@
 			v-if="fallback" @click.passive="open_link">
 			<p class="w-100 word-break fw-bold text-4 p-3 m-0">{{ props.data.url }}</p>
 		</div>
+		<div class="position-absolute bottom-0 end-0 m-2 link-indicator">
+			<span class="material-icons text-4">open_in_new</span>
+		</div>
 	</div>
 </template>
 

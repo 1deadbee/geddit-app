@@ -179,16 +179,22 @@ async function get_type() {
         return
     }
 
-    if (props.post.post_hint == 'link') {
-        type.value = "CompactLink";
-        return
-    }
+	if (props.post.post_hint == 'link') {
+		type.value = "CompactLink";
+		return
+	}
 
-    if (props.post.url_overridden_by_dest.startsWith('https://www.reddit.com/gallery/')) {
-        type.value = "CompactGallery";
-        return
-    }
-    type.value = "CompactFallback";
+	if (props.post.url_overridden_by_dest && props.post.url_overridden_by_dest.startsWith('https://www.reddit.com/gallery/')) {
+		type.value = "CompactGallery";
+		return
+	}
+
+	if (props.post.url && !props.post.is_self) {
+		type.value = "CompactLink";
+		return
+	}
+
+	type.value = "CompactFallback";
 }
 
 // onBeforeMount replacement
