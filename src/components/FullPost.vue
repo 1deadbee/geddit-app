@@ -151,15 +151,22 @@ async function get_type() {
         return
     }
 
-    if (props.post.data.post_hint == 'link') {
-        type.value = "CompactLink";
-        return
-    }
+	if (props.post.data.post_hint == 'link') {
+		type.value = "CompactLink";
+		return
+	}
 
-    if (props.post.data.url_overridden_by_dest.startsWith('https://www.reddit.com/gallery/')) {
-        type.value = "FullGallery";
-        return
-    }
+	if (props.post.data.url_overridden_by_dest && props.post.data.url_overridden_by_dest.startsWith('https://www.reddit.com/gallery/')) {
+		type.value = "FullGallery";
+		return
+	}
+
+	if (props.post.data.url && !props.post.data.is_self) {
+		type.value = "CompactLink";
+		return
+	}
+
+	type.value = "Placeholder";
 }
 
 async function hide_post() {
