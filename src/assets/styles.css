@@ -26,6 +26,12 @@ body {
     background-color: var(--background);
 }
 
+blockquote {
+    margin: 8px 0;
+    padding: 0 0 0 12px;
+    border-left: 2px solid var(--nord3);
+}
+
 hr {
     color: var(--background);
 }
@@ -189,6 +195,18 @@ video {
     display: flex;
     width: 100%;
     height: auto;
+}
+
+.md blockquote {
+    margin: 8px 0;
+    padding: 0 0 0 12px;
+    border-left: 2px solid var(--nord3);
+}
+
+.text-post blockquote {
+    margin: 8px 0;
+    padding: 0 0 0 12px;
+    border-left: 2px solid var(--nord3);
 }
 
 .progress-alt {
@@ -655,6 +673,12 @@ option[selected] {
     display: flex;
     flex-direction: column;
     word-break: break-word;
+}
+
+.comment-body blockquote {
+    margin: 8px 0;
+    padding: 0 0 0 12px;
+    border-left: 2px solid var(--nord3);
 }
 
 .comment-collapsed {
