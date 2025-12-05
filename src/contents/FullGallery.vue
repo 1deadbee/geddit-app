@@ -48,8 +48,13 @@ async function download(imageUrl, index) {
         path: `/geddit/${filename}.${extension}`
     }).then((res) => {
         console.log(res);
+        let fullPath = res.path;
+        let pathParts = fullPath.split('/');
+        let fileName = pathParts[pathParts.length - 1];
+        let documentsIndex = pathParts.findIndex(part => part === 'Documents');
+        let displayPath = documentsIndex !== -1 ? pathParts.slice(documentsIndex, -1).join('/') : pathParts.slice(0, -1).join('/');
         Toast.show({
-            text: 'Image saved to gallery',
+            text: `Image saved to ${displayPath}:\n${fileName}`,
             duration: 'short'
         });
     }).catch((error) => {
