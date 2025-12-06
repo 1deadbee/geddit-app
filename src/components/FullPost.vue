@@ -5,7 +5,7 @@
         </div>
         <div v-if="post.data.selftext_html && type !== 'FullText'" class="text-wrap text-break w-100">
             <div class="position-relative">
-                <div class="text-4 text-post position-relative video-post-selftext" v-html="decodeHtml(post.data.selftext_html)" />
+                <div class="text-4 text-post position-relative video-post-selftext" v-html="convertLinksToImages(decodeHtml(post.data.selftext_html))" />
             </div>
         </div>
         <div class="full-card-details">
@@ -118,6 +118,26 @@ function decodeHtml(html) {
 	let txt = document.createElement("textarea");
 	txt.innerHTML = html;
 	return txt.value;
+}
+
+function convertLinksToImages(html) {
+	const parser = new DOMParser();
+	const doc = parser.parseFromString(html, 'text/html');
+	const links = doc.querySelectorAll('a[href*="preview.redd.it"]');
+
+	links.forEach(link => {
+		const href = link.getAttribute('href');
+		if (href && (href.match(/\.(jpg|jpeg|png|gif|webp)/) || href.includes('preview.redd.it')))
+		{
+			const img = document.createElement('img');
+			img.src = href;
+			img.style.width = '100%';
+			img.style.height = 'auto';
+			link.replaceWith(img);
+		}
+	});
+
+	return doc.body.innerHTML;
 }
 
 async function get_type() {
